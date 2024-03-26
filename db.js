@@ -1,22 +1,31 @@
-process.on('unhandledRejection', (reason, promise) => {
-    console.log('Unhandled Rejection at:', promise, 'reason:', reason);
-  });
-  
-  const { Pool } = require('pg');
-  const connectionString = 'postgres://wbprpxru:yiQx_C9_TLDrrVcjw3iiwG3ELUSgRhtq@balarama.db.elephantsql.com/wbprpxru';
-  const pool = new Pool({ connectionString });
-  
-  pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-      console.error('Error executing query:', err.stack);
-    } else {
-      console.log('Query result:', res.rows[0]);
-    }
-    pool.end();
-  });
-  
-  module.exports = {
-    query: (text, params, callback) => {
-      return pool.query(text, params, callback);
-    },
-  };
+require('dotenv').config();
+const url = require('url');
+
+const { Pool } = require('pg');
+const dbUrl = url.parse(process.env.DB_URL);
+const auth = dbUrl.auth.split(':');
+
+const config = {
+  user: auth[0],
+  password: auth[1],
+  host: dbUrl.hostname,
+  port: dbUrl.port,
+  database: dbUrl.pathname.split('/')[1],
+};
+
+const pool = new Pool(config);
+
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('Error executing query:', err.stack);
+  } else {
+    console.log('Query result:', res.rows[0]);
+  }
+  pool.end();
+});
+
+module.exports = {
+  query: (text, params, callback) => {
+    return pool.query(text, params, callback);
+  },
+};
